@@ -1,50 +1,38 @@
-import time
 import requests
-from config import TOKEN
 
-TG_BO_BASE_URL = 'https://api.telegram.org/bot{TOKEN}'
-WEATHER_URL = 'http://api.weatherapi.com/v1'
-
+TOKEN = '8024406467:AAGt2mfZudKBRZcS8qBwuwD-narPbw-RbbA'
+TG_BASE_URL = f"https://api.telegram.org/bot{TOKEN}"
+WEATHER_URL = "http://api.weatherapi.com/v1"
 
 def get_last_update():
-    get_updates_url = f"{TG_BO_BASE_URL}/getUpdates"
-
-    response = requests.get(get_updates_url)
+    url = f"{TG_BASE_URL}/getUpdates"
+    response = requests.get(url)
     data = response.json()
-
-    return data['result'][-1]
+    return data["result"][-1] 
 
 def send_message(chat_id, text):
-    send_message_url = f"{TG_BO_BASE_URL}/sendMessage"
+    url = f"{TG_BASE_URL}/sendMessage"
+    payload = {"chat_id": chat_id, "text": text}
+    requests.get(url, params=payload)
 
-    payload = {
-        'chat_id': chat_id,
-        'text': text
-    }
-    response = requests.get(send_message_url, params=payload)
-
-def get_current_weather(city):
-    get_current_wather_url = f"{WEATHER_URL}/current.json"
-
-    payload = {
-        'key': 'c852ebca46f148469f3172212250707',
-        'q': city
-    }
-    response = requests.get(get_current_wather_url, params=payload)
-
+def get_weather(city):
+    url = f"{WEATHER_URL}/current.json"
+    payload = {"key": "c852ebca46f148469f3172212250707", "q": city}
+    response = requests.get(url, params=payload)
     data = response.json()
-    return data['current']['feelslike_c']
+    return data["current"]["feelslike_c"]
 
 
-while True:
-    last_update = get_last_update()
-    text = last_update['message']['text']
 
-    if text == '/start':
-        send_message(last_update['message']['chat']['id'], 'salom')
-    elif text in ['toshkent', 'samarqand', 'jizzax']:
-        weather = get_current_weather(text)
-        text = f"Hozir {text} da ob-havo {weather}"
-        send_message('1258594598', text)
+last_update = get_last_update()
+chat_id = last_update["message"]["chat"]["id"]
+text = last_update["message"]["text"].lower()
 
-    time.sleep(3)
+if text == "/start":
+    send_message(chat_id, "Salom 👋")
+elif text:
+    try:
+        weather = get_weather(text)
+        send_message(chat_id, f"Hozir {text.title()}da {weather}°C harorat ")
+    except:
+        send_message(chat_id, " Ob-havo topilmadi. Shahar nomini to‘g‘ri yozing.")
